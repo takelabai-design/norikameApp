@@ -9,10 +9,18 @@
         body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 15px; color: #1C1C1E; line-height: 1.4; }
         .container { max-width: 500px; margin: 0 auto; }
         .card { background: white; padding: 18px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; position: relative; }
-        .title { font-size: 1rem; font-weight: bold; margin-bottom: 12px; display: block; color: var(--primary); }
+
+        .title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .title { font-size: 1rem; font-weight: bold; color: var(--primary); }
+        .individual-reset { background: #F2F2F7; color: #666; border: none; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
+
         .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         select { width: 100%; padding: 12px; border: 1px solid #CCC; border-radius: 10px; font-size: 1rem; background: #fff; appearance: none; }
-        .main-select { border: 2px solid var(--primary); background: #fdfdff; font-weight: bold; }
+        .main-select { border: 2px solid var(--primary); background: #fdfdff; font-weight: bold; margin-bottom: 8px; }
+
+        /* お気に入り登録ボタン（目的地選択時のみ表示） */
+        .fav-action-btn { width: 100%; padding: 10px; border-radius: 12px; border: 2px solid var(--fav); background: white; color: #856404; font-weight: bold; font-size: 0.9rem; cursor: pointer; display: none; margin-bottom: 10px; transition: 0.2s; }
+        .fav-action-btn.is-fav { background: var(--fav); color: white; }
 
         .registry-box { background: #FFF3E0; border: 2px solid var(--my-stop); padding: 15px; border-radius: 20px; margin-bottom: 15px; text-align: center; }
         .my-stop-display { font-weight: 900; color: #E65100; font-size: 1.1rem; margin-bottom: 10px; }
@@ -21,8 +29,7 @@
         .btn-my { padding: 12px; background: var(--my-stop); color: white; }
         .btn-outline { padding: 8px; background: white; border: 2px solid var(--my-stop); color: var(--my-stop); margin-top: 10px; width: 100%; }
 
-        /* リセットボタン */
-        .btn-reset { width: 100%; padding: 10px; background: none; border: 1px solid var(--reset); color: var(--reset); margin-top: 5px; font-size: 0.85rem; border-radius: 10px; }
+        .btn-reset-all { width: 100%; padding: 12px; background: none; border: 1px solid var(--reset); color: var(--reset); margin-top: 10px; font-size: 0.85rem; border-radius: 10px; }
 
         #registryWindow { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 400px; background: white; z-index: 1000; padding: 20px; border-radius: 25px; box-shadow: 0 0 50px rgba(0,0,0,0.3); }
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 999; }
@@ -35,6 +42,7 @@
         .call-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .call-btn-kame { padding: 15px; background: var(--green); color: white; }
         .call-btn-kosuge { padding: 15px; background: var(--primary); color: white; }
+        .loading { text-align: center; padding: 50px; color: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -43,8 +51,9 @@
 
 <div class="container">
     <h2 style="text-align:center;">🚖 のりかめさん 運賃検索</h2>
+    <div id="loadingMsg" class="loading">⏳ 施設データを読み込み中...</div>
 
-    <div id="appContent">
+    <div id="appContent" style="display:none;">
         <div class="registry-box">
             <div id="myStopStatus" class="my-stop-display">🏠 MY停留所：未登録</div>
             <div id="myStopActions" class="quick-btn-grid" style="display:none;">
@@ -55,21 +64,32 @@
         </div>
 
         <div class="card">
-            <span class="title">📍 検索条件</span>
+            <div class="title-row">
+                <span class="title">📍 出発地点（乗る場所）</span>
+                <button class="individual-reset" onclick="resetPart('start')">× クリア</button>
+            </div>
             <div class="filter-grid">
                 <select id="startType" onchange="updateStartList()"></select>
-                <select id="startDist" onchange="updateStartList()"><option value="">出発：全校区</option></select>
+                <select id="startDist" onchange="updateStartList()"><option value="">全校区</option></select>
             </div>
             <select id="startPoint" class="main-select" onchange="calculate()"></select>
-
-            <div style="margin-top:15px;" class="filter-grid">
-                <select id="endType" onchange="updateEndList()"></select>
-                <select id="endDist" onchange="updateEndList()"><option value="">到着：全校区</option></select>
-            </div>
-            <select id="endPoint" class="main-select" onchange="calculate()"></select>
-
-            <button class="btn btn-reset" onclick="resetSelections()">🔄 検索内容をすべて消去</button>
         </div>
+
+        <div class="card">
+            <div class="title-row">
+                <span class="title">🏁 目的地（降りる場所）</span>
+                <button class="individual-reset" onclick="resetPart('end')">× クリア</button>
+            </div>
+            <div class="filter-grid">
+                <select id="endType" onchange="updateEndList()"></select>
+                <select id="endDist" onchange="updateEndList()"><option value="">全校区</option></select>
+            </div>
+            <select id="endPoint" class="main-select" onchange="updateFavButton()"></select>
+
+            <button id="favBtn" class="fav-action-btn" onclick="toggleFav()">⭐ お気に入りに追加</button>
+        </div>
+
+        <button class="btn btn-reset-all" onclick="resetAll()">🔄 条件をすべてリセット</button>
 
         <div id="resultArea" class="result-card">
             <div style="font-size:0.9rem; color:#666;">片道運賃（一人あたり）</div>
@@ -90,50 +110,44 @@
     <select id="regDist" onchange="filterRegList()" style="margin-bottom:10px;"><option value="">全ての校区から探す</option></select>
     <select id="regPoint" class="main-select" style="margin-bottom:20px;"><option value="">停留所を選択...</option></select>
     <button class="btn btn-my" style="width:100%; padding:15px;" onclick="saveMyStop()">この場所を登録する</button>
-    <button class="btn" style="width:100%; margin-top:10px; color:#999; background:none;" onclick="closeRegistry()">キャンセル</button>
+    <button class="btn" style="width:100%; margin-top:10px; color:#reset; background:none;" onclick="closeRegistry()">キャンセル</button>
 </div>
 
 <script>
-// --- 完全データ（439箇所） ---
-const csvRawData = `施設番号,施設名,住所,小学区,施設種別,料金
-101,市役所,三重県亀山市本丸町577番地,亀山西小,公共施設,¥500
-102,関支所,三重県亀山市関町木崎919番地1,関小,公共施設,¥1000
-103,加太出張所,三重県亀山市加太板屋4622番地1,加太小,公共施設,¥1500
-201,JR亀山駅前,三重県亀山市御幸町,亀山西小,鉄道駅,¥500
-202,JR井田川駅前,三重県亀山市井田川町,井田川小,鉄道駅,¥500
-703,マックスバリュ亀山店,三重県亀山市北町,亀山東小,商業施設,¥500
-K02,アイリス入口中央公園,三重県亀山市アイリス町,亀山西小,地域停留所,¥500
-B16,ヒルトップ小下前,,亀山東小,地域停留所,¥500
-R02,東新田防災倉庫,,関小,地域停留所,¥1000
-U08,加太小学校,,加太小,地域停留所,¥1500
-V08,沓掛西,,関小,地域停留所,¥1000`;
-// ※実際はここにご提供した全データを埋め込みます。
-
 let allFacilities = [];
 let myStop = localStorage.getItem('norikame_my_stop') || "";
+let myFavs = JSON.parse(localStorage.getItem('norikame_favs')) || [];
 
-function loadData() {
-    const lines = csvRawData.split(/\r\n|\n/);
-    for(let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',');
-        if(cols.length >= 5) {
-            allFacilities.push({ id: cols[0].trim(), n: cols[1].trim(), d: cols[3].trim(), t: cols[4].trim() });
+fetch('data.csv')
+    .then(res => res.text())
+    .then(csvText => {
+        const lines = csvText.split(/\r\n|\n/);
+        for(let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if(!line) continue;
+            const cols = line.split(',');
+            if(cols.length >= 5) {
+                allFacilities.push({ id: cols[0].trim(), n: cols[1].trim(), d: cols[3].trim(), t: cols[4].trim() });
+            }
         }
-    }
-    init();
-    updateRegistryUI();
-}
+        document.getElementById('loadingMsg').style.display = 'none';
+        document.getElementById('appContent').style.display = 'block';
+        init();
+        updateRegistryUI();
+    });
 
 function init() {
     const dists = [...new Set(allFacilities.map(f => f.d))].filter(d => d).sort();
-    const types = [...new Set(allFacilities.filter(f => f.t !== '地域停留所').map(f => f.t))].sort();
+    // 「その他」を除いてソートし、最後に「その他」を追加
+    let types = [...new Set(allFacilities.filter(f => f.t !== '地域停留所' && f.t !== 'その他').map(f => f.t))].sort();
+    if (allFacilities.some(f => f.t === 'その他')) types.push('その他');
 
     [['startType','startDist'], ['endType','endDist']].forEach(pair => {
         const tSel = document.getElementById(pair[0]);
         const dSel = document.getElementById(pair[1]);
-        tSel.innerHTML = '<option value="">全ての種別</option>';
-        types.forEach(t => tSel.add(new Option(t, t)));
-        dSel.innerHTML = pair[0].includes('start') ? '<option value="">出発：全校区</option>' : '<option value="">到着：全校区</option>';
+        tSel.innerHTML = '<option value="">全ての施設種別</option>';
+        ['⭐ お気に入り'].concat(types).forEach(t => tSel.add(new Option(t, t)));
+        dSel.innerHTML = '<option value="">全校区</option>';
         dists.forEach(d => dSel.add(new Option(d, d)));
     });
 
@@ -142,31 +156,62 @@ function init() {
     updateStartList(); updateEndList();
 }
 
-// --- リセット機能 ---
-function resetSelections() {
-    document.getElementById('startType').value = "";
-    document.getElementById('startDist').value = "";
-    document.getElementById('endType').value = "";
-    document.getElementById('endDist').value = "";
-    updateStartList();
-    updateEndList();
+function updateFavButton() {
+    const name = document.getElementById('endPoint').value;
+    const btn = document.getElementById('favBtn');
+    if (!name) { btn.style.display = 'none'; calculate(); return; }
+
+    btn.style.display = 'block';
+    if (myFavs.includes(name)) {
+        btn.innerHTML = "⭐ お気に入りから削除";
+        btn.classList.add('is-fav');
+    } else {
+        btn.innerHTML = "☆ お気に入りに追加";
+        btn.classList.remove('is-fav');
+    }
+    calculate();
+}
+
+function toggleFav() {
+    const name = document.getElementById('endPoint').value;
+    if (!name) return;
+    if (myFavs.includes(name)) myFavs = myFavs.filter(i => i !== name);
+    else myFavs.push(name);
+    localStorage.setItem('norikame_favs', JSON.stringify(myFavs));
+    updateFavButton();
+    updateEndList(); // リストの⭐マークを更新
+    document.getElementById('endPoint').value = name; // 選択を維持
+}
+
+function resetPart(part) {
+    document.getElementById(part + 'Type').value = "";
+    document.getElementById(part + 'Dist').value = "";
+    if(part === 'start') updateStartList();
+    else { updateEndList(); document.getElementById('favBtn').style.display = 'none'; }
     document.getElementById('resultArea').style.display = 'none';
 }
+
+function resetAll() { resetPart('start'); resetPart('end'); }
 
 function render(targetId, typeId, distId) {
     const tFilt = document.getElementById(typeId).value;
     const dFilt = document.getElementById(distId).value;
     const el = document.getElementById(targetId);
     el.innerHTML = '<option value="">選択してください...</option>';
+
     let filtered = allFacilities.filter(f => f.t !== '地域停留所');
-    if (tFilt) filtered = filtered.filter(f => f.t === tFilt);
+    if (tFilt === '⭐ お気に入り') filtered = filtered.filter(f => myFavs.includes(f.n));
+    else if (tFilt) filtered = filtered.filter(f => f.t === tFilt);
     if (dFilt) filtered = filtered.filter(f => f.d === dFilt);
-    filtered.sort((a, b) => a.n.localeCompare(b.n, 'ja')).forEach(f => el.add(new Option(f.n, f.n)));
-    calculate();
+
+    filtered.sort((a, b) => a.n.localeCompare(b.n, 'ja')).forEach(f => {
+        el.add(new Option((myFavs.includes(f.n) ? '⭐ ' : '') + f.n, f.n));
+    });
 }
 
-function updateStartList() { render('startPoint', 'startType', 'startDist'); }
-function updateEndList() { render('endPoint', 'endType', 'endDist'); }
+function updateStartList() { render('startPoint', 'startType', 'startDist'); calculate(); }
+function updateEndList() { render('endPoint', 'endType', 'endDist'); calculate(); }
+
 function openRegistry() { document.getElementById('registryWindow').style.display='block'; document.getElementById('overlay').style.display='block'; filterRegList(); }
 function closeRegistry() { document.getElementById('registryWindow').style.display='none'; document.getElementById('overlay').style.display='none'; }
 
@@ -198,6 +243,7 @@ function setMyStopTo(targetId) {
     const facility = allFacilities.find(f => f.n === myStop);
     if(!facility) return;
     select.innerHTML = `<option value="${myStop}">🏠 [${facility.id}] ${myStop}</option>`;
+    if(targetId === 'endPoint') updateFavButton();
     calculate();
 }
 
@@ -205,7 +251,7 @@ function makeCall(number) {
     const now = new Date();
     const totalMin = now.getHours() * 60 + now.getMinutes();
     if (now.getDay() === 0 || totalMin < 570 || totalMin > 990) {
-        alert("【受付時間外です】\n予約：月〜土 9:30〜16:30");
+        alert("【受付時間外です】\n予約受付：月〜土 9:30〜16:30");
     } else {
         window.location.href = 'tel:' + number;
     }
@@ -219,19 +265,19 @@ function calculate() {
 
     const s = allFacilities.find(f => f.n === sN);
     const e = allFacilities.find(f => f.n === eN);
+    if(!s || !e) return;
 
     const matrix = {
-        '川崎小':   { '白川小':'B', '神辺小':'B', '亀山南小':'B', '昼生小':'B', '関小':'C', '加太小':'C' },
-        '野登小':   { '神辺小':'B', '亀山南小':'B', '昼生小':'B', '関小':'B', '加太小':'C' },
+        '川崎小': { '白川小':'B', '神辺小':'B', '亀山南小':'B', '昼生小':'B', '関小':'C', '加太小':'C' },
+        '野登小': { '神辺小':'B', '亀山南小':'B', '昼生小':'B', '関小':'B', '加太小':'C' },
+        '亀山西小': { '関小':'B', '加太小':'C' },
         '亀山東小': { '白川小':'B', '神辺小':'B', '亀山南小':'A', '昼生小':'A', '関小':'C', '加太小':'C' },
-        '井田川小': { '白川小':'B', '神辺小':'B', '亀山南小':'B', '昼生小':'B', '関小':'C', '加太小':'C' },
-        '白川小':   { '川崎小':'B', '亀山東小':'B', '井田川小':'B', '神辺小':'A', '亀山南小':'B', '昼生小':'B', '関小':'A', '加太小':'B' },
-        '関小':     { '川崎小':'C', '野登小':'B', '亀山西小':'B', '亀山東小':'C', '井田川小':'C', '神辺小':'A', '昼生小':'C', '加太小':'A' },
-        '加太小':   { '川崎小':'C', '野登小':'C', '亀山西小':'C', '亀山東小':'C', '井田川小':'C', '白川小':'B', '神辺小':'B', '亀山南小':'C', '昼生小':'C', '関小':'A' }
+        '白川小': { '神辺小':'A', '関小':'A' },
+        '関小': { '神辺小':'A', '加太小':'A' }
     };
 
     let zone = 'A';
-    if (s.d !== e.d) zone = (matrix[s.d] && matrix[s.d][e.d]) || 'A';
+    if (s.d !== e.d) zone = (matrix[s.d] && matrix[s.d][e.d]) || (matrix[e.d] && matrix[e.d][s.d]) || 'A';
     const p = { 'A': 500, 'B': 1000, 'C': 1500 };
 
     res.style.display = 'block';
