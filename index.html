@@ -5,39 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>のりかめさん 運賃検索</title>
     <style>
-        :root { --primary: #007AFF; --bg: #F2F2F7; --fav: #FFCC00; --my-stop: #FF9500; --error: #FF3B30; --google: #4285F4; --green: #34C759; --reset: #8E8E93; }
+        :root { --primary: #007AFF; --bg: #F2F2F7; --fav: #FFCC00; --my-stop: #FF9500; --reset: #8E8E93; --green: #34C759; --google: #4285F4; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 15px; color: #1C1C1E; line-height: 1.4; }
         .container { max-width: 500px; margin: 0 auto; }
         .card { background: white; padding: 18px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; position: relative; }
 
         .title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .title { font-size: 1rem; font-weight: bold; color: var(--primary); }
-        .individual-reset { background: #F2F2F7; color: #666; border: none; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
+        .individual-reset { background: #E5E5EA; color: #666; border: none; padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
 
         .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         select { width: 100%; padding: 12px; border: 1px solid #CCC; border-radius: 10px; font-size: 1rem; background: #fff; appearance: none; }
         .main-select { border: 2px solid var(--primary); background: #fdfdff; font-weight: bold; margin-bottom: 8px; }
 
-        /* お気に入り登録ボタン（目的地選択時のみ表示） */
-        .fav-action-btn { width: 100%; padding: 10px; border-radius: 12px; border: 2px solid var(--fav); background: white; color: #856404; font-weight: bold; font-size: 0.9rem; cursor: pointer; display: none; margin-bottom: 10px; transition: 0.2s; }
+        /* お気に入り登録ボタン */
+        .fav-action-btn { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid var(--fav); background: white; color: #856404; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: none; margin-bottom: 10px; }
         .fav-action-btn.is-fav { background: var(--fav); color: white; }
 
         .registry-box { background: #FFF3E0; border: 2px solid var(--my-stop); padding: 15px; border-radius: 20px; margin-bottom: 15px; text-align: center; }
         .my-stop-display { font-weight: 900; color: #E65100; font-size: 1.1rem; margin-bottom: 10px; }
         .quick-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn { border: none; border-radius: 12px; font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .btn { border: none; border-radius: 12px; font-size: 0.95rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-my { padding: 12px; background: var(--my-stop); color: white; }
         .btn-outline { padding: 8px; background: white; border: 2px solid var(--my-stop); color: var(--my-stop); margin-top: 10px; width: 100%; }
 
-        .btn-reset-all { width: 100%; padding: 12px; background: none; border: 1px solid var(--reset); color: var(--reset); margin-top: 10px; font-size: 0.85rem; border-radius: 10px; }
+        .btn-reset-all { width: 100%; padding: 12px; background: none; border: 1px solid var(--reset); color: var(--reset); margin-top: 5px; font-size: 0.85rem; border-radius: 10px; }
 
         #registryWindow { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 400px; background: white; z-index: 1000; padding: 20px; border-radius: 25px; box-shadow: 0 0 50px rgba(0,0,0,0.3); }
         #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 999; }
 
+        /* 検索結果・写真検索ボタン */
         .result-card { background: white; padding: 25px; border-radius: 24px; text-align: center; box-shadow: 0 15px 35px rgba(0,122,255,0.15); border: 2px solid var(--primary); margin-top: 20px; display: none; }
         .price { font-size: 3.5rem; font-weight: 900; color: var(--primary); margin: 0; line-height: 1; }
         .unit { font-size: 1.2rem; margin-left: 5px; }
-        .taxi-time { background: #F2F2F7; padding: 10px; border-radius: 12px; margin: 15px 0; font-weight: bold; font-size: 0.9rem; }
+        .taxi-time { background: #F2F2F7; padding: 10px; border-radius: 12px; margin: 15px 0; font-weight: bold; font-size: 0.9rem; color: var(--primary); display: none; }
+        .photo-btn { margin-bottom: 15px; width: 100%; padding: 12px; border: 1.5px solid var(--google); background: white; color: var(--google); border-radius: 12px; font-weight: bold; }
 
         .call-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .call-btn-kame { padding: 15px; background: var(--green); color: white; }
@@ -65,7 +67,7 @@
 
         <div class="card">
             <div class="title-row">
-                <span class="title">📍 出発地点（乗る場所）</span>
+                <span class="title">📍 出発地点</span>
                 <button class="individual-reset" onclick="resetPart('start')">× クリア</button>
             </div>
             <div class="filter-grid">
@@ -77,7 +79,7 @@
 
         <div class="card">
             <div class="title-row">
-                <span class="title">🏁 目的地（降りる場所）</span>
+                <span class="title">🏁 目的地</span>
                 <button class="individual-reset" onclick="resetPart('end')">× クリア</button>
             </div>
             <div class="filter-grid">
@@ -85,16 +87,18 @@
                 <select id="endDist" onchange="updateEndList()"><option value="">全校区</option></select>
             </div>
             <select id="endPoint" class="main-select" onchange="updateFavButton()"></select>
-
             <button id="favBtn" class="fav-action-btn" onclick="toggleFav()">⭐ お気に入りに追加</button>
         </div>
 
-        <button class="btn btn-reset-all" onclick="resetAll()">🔄 条件をすべてリセット</button>
+        <button class="btn btn-reset-all" onclick="resetAll()">🔄 全条件をリセット</button>
 
         <div id="resultArea" class="result-card">
             <div style="font-size:0.9rem; color:#666;">片道運賃（一人あたり）</div>
             <div class="price" id="fareDisplay">0<span class="unit">円</span></div>
-            <div id="routeDetail" style="font-size:0.85rem; color:#8E8E93; margin-top:5px;"></div>
+            <div id="routeDetail" style="font-size:0.85rem; color:#8E8E93; margin-top:5px; margin-bottom:15px;"></div>
+
+            <button id="photoSearchBtn" class="btn photo-btn" onclick="openPhotoSearch()">🔍 目的地の写真を確認</button>
+
             <div class="taxi-time" id="readyTimeDisplay"></div>
 
             <div class="call-grid">
@@ -110,7 +114,7 @@
     <select id="regDist" onchange="filterRegList()" style="margin-bottom:10px;"><option value="">全ての校区から探す</option></select>
     <select id="regPoint" class="main-select" style="margin-bottom:20px;"><option value="">停留所を選択...</option></select>
     <button class="btn btn-my" style="width:100%; padding:15px;" onclick="saveMyStop()">この場所を登録する</button>
-    <button class="btn" style="width:100%; margin-top:10px; color:#reset; background:none;" onclick="closeRegistry()">キャンセル</button>
+    <button class="btn" style="width:100%; margin-top:10px; color:#666; background:none;" onclick="closeRegistry()">キャンセル</button>
 </div>
 
 <script>
@@ -118,6 +122,7 @@ let allFacilities = [];
 let myStop = localStorage.getItem('norikame_my_stop') || "";
 let myFavs = JSON.parse(localStorage.getItem('norikame_favs')) || [];
 
+// CSV読み込み
 fetch('data.csv')
     .then(res => res.text())
     .then(csvText => {
@@ -138,7 +143,6 @@ fetch('data.csv')
 
 function init() {
     const dists = [...new Set(allFacilities.map(f => f.d))].filter(d => d).sort();
-    // 「その他」を除いてソートし、最後に「その他」を追加
     let types = [...new Set(allFacilities.filter(f => f.t !== '地域停留所' && f.t !== 'その他').map(f => f.t))].sort();
     if (allFacilities.some(f => f.t === 'その他')) types.push('その他');
 
@@ -160,7 +164,6 @@ function updateFavButton() {
     const name = document.getElementById('endPoint').value;
     const btn = document.getElementById('favBtn');
     if (!name) { btn.style.display = 'none'; calculate(); return; }
-
     btn.style.display = 'block';
     if (myFavs.includes(name)) {
         btn.innerHTML = "⭐ お気に入りから削除";
@@ -179,8 +182,8 @@ function toggleFav() {
     else myFavs.push(name);
     localStorage.setItem('norikame_favs', JSON.stringify(myFavs));
     updateFavButton();
-    updateEndList(); // リストの⭐マークを更新
-    document.getElementById('endPoint').value = name; // 選択を維持
+    updateEndList();
+    document.getElementById('endPoint').value = name;
 }
 
 function resetPart(part) {
@@ -198,12 +201,10 @@ function render(targetId, typeId, distId) {
     const dFilt = document.getElementById(distId).value;
     const el = document.getElementById(targetId);
     el.innerHTML = '<option value="">選択してください...</option>';
-
     let filtered = allFacilities.filter(f => f.t !== '地域停留所');
     if (tFilt === '⭐ お気に入り') filtered = filtered.filter(f => myFavs.includes(f.n));
     else if (tFilt) filtered = filtered.filter(f => f.t === tFilt);
     if (dFilt) filtered = filtered.filter(f => f.d === dFilt);
-
     filtered.sort((a, b) => a.n.localeCompare(b.n, 'ja')).forEach(f => {
         el.add(new Option((myFavs.includes(f.n) ? '⭐ ' : '') + f.n, f.n));
     });
@@ -247,25 +248,42 @@ function setMyStopTo(targetId) {
     calculate();
 }
 
-function makeCall(number) {
+function checkBusinessTime() {
     const now = new Date();
     const totalMin = now.getHours() * 60 + now.getMinutes();
-    if (now.getDay() === 0 || totalMin < 570 || totalMin > 990) {
+    const isSunday = now.getDay() === 0;
+    return !isSunday && totalMin >= 570 && totalMin <= 990; // 9:30-16:30
+}
+
+function makeCall(number) {
+    if (!checkBusinessTime()) {
         alert("【受付時間外です】\n予約受付：月〜土 9:30〜16:30");
     } else {
         window.location.href = 'tel:' + number;
     }
 }
 
+function openPhotoSearch() {
+    const name = document.getElementById('endPoint').value;
+    if (!name) return;
+    window.open(`https://www.google.com/search?q=${encodeURIComponent('三重県亀山市 ' + name)}&tbm=isch`, '_blank');
+}
+
 function calculate() {
     const sN = document.getElementById('startPoint').value;
     const eN = document.getElementById('endPoint').value;
     const res = document.getElementById('resultArea');
+    const timeDisp = document.getElementById('readyTimeDisplay');
+    const photoBtn = document.getElementById('photoSearchBtn');
+
     if (!sN || !eN) { res.style.display = 'none'; return; }
 
     const s = allFacilities.find(f => f.n === sN);
     const e = allFacilities.find(f => f.n === eN);
     if(!s || !e) return;
+
+    // 写真検索ボタンの表示制御
+    photoBtn.style.display = (e.t === '地域停留所') ? 'none' : 'block';
 
     const matrix = {
         '川崎小': { '白川小':'B', '神辺小':'B', '亀山南小':'B', '昼生小':'B', '関小':'C', '加太小':'C' },
@@ -275,17 +293,21 @@ function calculate() {
         '白川小': { '神辺小':'A', '関小':'A' },
         '関小': { '神辺小':'A', '加太小':'A' }
     };
-
     let zone = 'A';
     if (s.d !== e.d) zone = (matrix[s.d] && matrix[s.d][e.d]) || (matrix[e.d] && matrix[e.d][s.d]) || 'A';
     const p = { 'A': 500, 'B': 1000, 'C': 1500 };
 
     res.style.display = 'block';
     document.getElementById('fareDisplay').innerHTML = p[zone] + '<span class="unit">円</span>';
-    document.getElementById('routeDetail').innerHTML = `${s.d} ➔ ${e.d}`;
+    document.getElementById('routeDetail').innerHTML = `<span style="background:#E5E5EA; padding:2px 8px; border-radius:5px;">${s.d}</span> ➔ <span style="background:#E5E5EA; padding:2px 8px; border-radius:5px;">${e.d}</span>`;
 
-    const ready = new Date(new Date().getTime() + 60 * 60000);
-    document.getElementById('readyTimeDisplay').innerHTML = `🕒 最短予約：${ready.getHours()}:${ready.getMinutes().toString().padStart(2, '0')} 以降`;
+    if (checkBusinessTime()) {
+        const ready = new Date(new Date().getTime() + 60 * 60000);
+        timeDisp.innerHTML = `🕒 今すぐ予約して乗れる最短：<b>${ready.getHours()}:${ready.getMinutes().toString().padStart(2, '0')} 以降</b>`;
+        timeDisp.style.display = 'block';
+    } else {
+        timeDisp.style.display = 'none';
+    }
 }
 window.onload = loadData;
 </script>
